@@ -1,0 +1,28 @@
+name: bus_density_app
+description: Cross-platform bus crowd density reporting app with a Django REST API backend.
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.2.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_map: ^8.3.0
+  flutter_map_animations: ^0.10.0
+  http: ^1.2.2
+  latlong2: ^0.9.1
+  provider: ^6.1.2
+  shared_preferences: ^2.5.5
+  url_launcher: ^6.3.2
+  geolocator: ^13.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+flutter:
+  uses-material-design: true
