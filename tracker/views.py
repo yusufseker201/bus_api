@@ -7,12 +7,15 @@ from django.contrib.auth import get_user_model
 from django.http import FileResponse, Http404
 from django.db.models import Count, Prefetch, Q
 from django.views.decorators.http import require_GET
+from django.views.decorators.csrf import csrf_exempt  # CSRF muafiyeti için eklendi
+from django.utils.decorators import method_decorator  # Class-based view'lar için eklendi
 from rest_framework.authtoken.models import Token
 from rest_framework import permissions, status, viewsets
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import serializers
+from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 
 from .models import BusLine, BusStop, DensityReport, UserProfile
 from .serializers import BusLineSerializer, BusStopSerializer, DensityReportSerializer, UserProfileSerializer
@@ -23,12 +26,6 @@ from .throttles import UserReportRateThrottle
 def flutter_web_app(request, path=''):
     """
     Serve the built Flutter web app from the Django root.
-
-    In development, the Flutter build output is served directly from
-    flutter_frontend/build/web so the web UI appears at / instead of
-    the default Django landing screen.
-
-    API routes stay under /api/ so the Flutter SPA and DRF can coexist.
     """
     web_dir = Path(settings.FLUTTER_WEB_DIR)
     if not web_dir.exists():
@@ -83,14 +80,11 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(trim_whitespace=False)
 
 
+# Web testlerinde ve Flutter isteklerinde CSRF engeline takılmamak için muaf tutuyoruz
+@method_decorator(csrf_exempt, name='dispatch')
 class LoginView(APIView):
-    """
-    Token login endpoint for Flutter.
-
-    Accepts either username or email in the `email` field for convenience.
-    """
-
     permission_classes = [permissions.AllowAny]
+    authentication_classes = []  # Login olurken session kontrolünü tamamen kapat
 
     def post(self, request, *args, **kwargs):
         serializer = LoginSerializer(data=request.data)
@@ -129,18 +123,24 @@ class BusLineViewSet(viewsets.ReadOnlyModelViewSet):
     )
     serializer_class = BusLineSerializer
     permission_classes = [permissions.AllowAny]
+    authentication_classes = []  # Herkesin erişebilmesi için auth filtrelerini temizle
 
 
 class BusStopViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = BusStop.objects.prefetch_related('bus_lines')
     serializer_class = BusStopSerializer
     permission_classes = [permissions.AllowAny]
+    authentication_classes = []  # Herkesin erişebilmesi için auth filtrelerini temizle
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class DensityReportViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'head', 'options']
     serializer_class = DensityReportSerializer
+    # Varsayılan izni AllowAny yapıyoruz ki GET istekleri (listeleme) serbest olsun
     permission_classes = [permissions.AllowAny]
+    # Sadece Token tabanlı doğrulamayı önceliklendiriyoruz, Session tabanlı CSRF kontrolünü eziyoruz
+    authentication_classes = [TokenAuthentication]
 
     def get_queryset(self):
         return DensityReport.objects.select_related('bus_line', 'bus_stop', 'user').filter(
@@ -148,9 +148,11 @@ class DensityReportViewSet(viewsets.ModelViewSet):
         )
 
     def get_permissions(self):
+        # Sadece rapor gönderirken (POST - create veya submit) giriş zorunlu olsun
         if self.action in {'create', 'submit'}:
             return [permissions.IsAuthenticated()]
-        return super().get_permissions()
+        # Listeleme (GET) işlemlerinde herkese izin ver
+        return [permissions.AllowAny()]
 
     def get_throttles(self):
         if self.action in {'create', 'submit'}:
@@ -166,12 +168,6 @@ class DensityReportViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'], url_path='submit')
     def submit(self, request, *args, **kwargs):
-        """
-        Convenience endpoint for the Flutter client.
-
-        The frontend can POST the same payload here or to the standard
-        collection endpoint. Both paths share the same validation and save flow.
-        """
         return self.create(request, *args, **kwargs)
 
 
@@ -179,6 +175,7 @@ class UserProfileViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = UserProfile.objects.select_related('user')
     serializer_class = UserProfileSerializer
     permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [TokenAuthentication]
 
     def get_queryset(self):
         active_reports = DensityReport.objects.filter(is_active=True).select_related(

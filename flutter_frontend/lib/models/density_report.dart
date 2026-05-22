@@ -12,6 +12,7 @@ class DensityReport {
     required this.locationValidated,
     this.busLine = '',
     this.isActive = true,
+    this.reporterName = '',
   });
 
   final String id;
@@ -24,4 +25,8 @@ class DensityReport {
   final bool locationValidated;
   final String busLine;
   final bool isActive;
+  final String reporterName;
+
+  String get displayLine =>
+      busRouteNumber.isNotEmpty ? busRouteNumber : busLine;
 }

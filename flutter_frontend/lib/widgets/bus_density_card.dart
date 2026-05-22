@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/bus.dart';
 import '../models/bus_stop.dart';
 import '../models/density_level.dart';
+import '../theme/app_theme.dart';
 import 'density_level_badge.dart';
 
 class BusDensityCard extends StatelessWidget {
@@ -24,108 +25,128 @@ class BusDensityCard extends StatelessWidget {
     final theme = Theme.of(context);
     final accent = bus.densityLevel.color;
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(24),
-      child: Card(
-        child: Padding(
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(AppTheme.radius),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppTheme.radius),
+        child: Ink(
           padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppTheme.radius),
+            border: Border.all(color: const Color(0xFFE1EFEB)),
+            boxShadow: AppTheme.softShadow,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    width: 48,
-                    height: 48,
+                    width: 58,
+                    height: 58,
                     decoration: BoxDecoration(
-                      color: accent.withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(16),
+                      color: accent.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(18),
                     ),
-                    child: Icon(Icons.directions_bus_filled_rounded, color: accent),
+                    alignment: Alignment.center,
+                    child: Text(
+                      bus.routeNumber,
+                      style: TextStyle(
+                        color: accent,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 20,
+                      ),
+                    ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          bus.displayName,
-                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                          bus.routeName,
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.2,
+                          ),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 4),
                         Text(
-                          bus.routeTitle,
-                          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                          '${bus.origin} • ${bus.destination}',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 6),
                         Text(
-                          'Durak: ${stop.name}',
-                          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                          'Son rapor: ${stop.name}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),
                   ),
+                  const SizedBox(width: 10),
                   DensityLevelBadge(level: bus.densityLevel, compact: true),
                 ],
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  _SoftInfoPill(
+                    icon: Icons.place_outlined,
+                    label: bus.currentStopName,
+                  ),
+                  _SoftInfoPill(
+                    icon: Icons.schedule_rounded,
+                    label: '${bus.etaMinutes} dk',
+                  ),
+                  _SoftInfoPill(
+                    icon: Icons.groups_rounded,
+                    label: '%${bus.occupancyPercent} doluluk',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: LinearProgressIndicator(
+                  minHeight: 8,
+                  value: bus.occupancyPercent / 100,
+                  backgroundColor: const Color(0xFFEAF3F0),
+                  color: accent,
+                ),
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
-                    child: _StatTile(
-                      label: 'Güncel durak',
-                      value: bus.currentStopName,
-                      icon: Icons.place_outlined,
+                    child: Text(
+                      bus.predictionText,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Expanded(
-                    child: _StatTile(
-                      label: 'Varış',
-                      value: '${bus.etaMinutes} dk',
-                      icon: Icons.schedule_outlined,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(999),
-                child: LinearProgressIndicator(
-                  minHeight: 10,
-                  value: bus.occupancyPercent / 100,
-                  backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                  color: accent,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Text(
-                    '%${bus.occupancyPercent} doluluk',
-                    style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '${_timeAgo(bus.lastUpdated)} güncellendi',
-                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
                   FilledButton.tonalIcon(
-                    onPressed: onTap,
-                    icon: const Icon(Icons.insights_outlined),
-                    label: const Text('Detay'),
-                  ),
-                  const SizedBox(width: 10),
-                  OutlinedButton.icon(
                     onPressed: onReport,
-                    icon: const Icon(Icons.how_to_vote_outlined),
+                    icon: const Icon(Icons.edit_note_rounded),
                     label: const Text('Raporla'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppTheme.mint,
+                      foregroundColor: AppTheme.deepTeal,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 12),
+                    ),
                   ),
                 ],
               ),
@@ -135,53 +156,37 @@ class BusDensityCard extends StatelessWidget {
       ),
     );
   }
-
-  String _timeAgo(DateTime dateTime) {
-    final minutes = DateTime.now().difference(dateTime).inMinutes;
-    if (minutes < 1) return 'az önce';
-    if (minutes == 1) return '1 dk önce';
-    return '$minutes dk önce';
-  }
 }
 
-class _StatTile extends StatelessWidget {
-  const _StatTile({
-    required this.label,
-    required this.value,
+class _SoftInfoPill extends StatelessWidget {
+  const _SoftInfoPill({
     required this.icon,
+    required this.label,
   });
 
-  final String label;
-  final String value;
   final IconData icon;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(18),
+        color: const Color(0xFFF4FBF8),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 18, color: theme.colorScheme.primary),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: theme.textTheme.bodySmall),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
-                ),
-              ],
+          Icon(icon, size: 16, color: AppTheme.teal),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: AppTheme.text,
             ),
           ),
         ],

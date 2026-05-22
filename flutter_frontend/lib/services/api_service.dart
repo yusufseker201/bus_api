@@ -17,10 +17,12 @@ class ApiService {
     String? Function()? tokenProvider,
   })  : _client = client ?? http.Client(),
         apiBaseUrl = apiBaseUrl ??
-            (kIsWeb ? '/api' : const String.fromEnvironment(
-              'API_BASE_URL',
-              defaultValue: 'http://10.0.2.2:8000/api',
-            )),
+            (kIsWeb
+                ? '/api'
+                : const String.fromEnvironment(
+                    'API_BASE_URL',
+                    defaultValue: 'http://10.0.2.2:8000/api',
+                  )),
         _tokenProvider = tokenProvider;
 
   final http.Client _client;
@@ -44,7 +46,9 @@ class ApiService {
     final reportsByLine = _groupReportsByLine(reports);
 
     return lines.map((line) {
-      final lineId = (line['id'] as num?)?.toInt() ?? int.tryParse(line['id'].toString()) ?? 0;
+      final lineId = (line['id'] as num?)?.toInt() ??
+          int.tryParse(line['id'].toString()) ??
+          0;
       final lineReports = reportsByLine[lineId] ?? const [];
       final latest = lineReports.isNotEmpty ? lineReports.first : null;
       final density = _densityFromApiValue(latest?['density_level'] as String?);
@@ -52,7 +56,9 @@ class ApiService {
           .map((stop) => stop as Map<String, dynamic>)
           .toList();
       final currentStopName = (latest?['bus_stop_name'] as String?) ??
-          (stops.isNotEmpty ? (stops.first['name'] as String? ?? 'Bilinmeyen durak') : 'Bilinmeyen durak');
+          (stops.isNotEmpty
+              ? (stops.first['name'] as String? ?? 'Bilinmeyen durak')
+              : 'Bilinmeyen durak');
       final nextStopName = stops.length > 1
           ? (stops[1]['name'] as String? ?? currentStopName)
           : currentStopName;
@@ -61,17 +67,23 @@ class ApiService {
         id: line['id'].toString(),
         routeNumber: (line['name'] as String?) ?? line['id'].toString(),
         routeName: (line['name'] as String?) ?? line['id'].toString(),
-        origin: stops.isNotEmpty ? (stops.first['name'] as String? ?? 'Kahramanmaraş') : 'Kahramanmaraş',
-        destination: stops.isNotEmpty ? (stops.last['name'] as String? ?? 'Kahramanmaraş') : 'Kahramanmaraş',
+        origin: stops.isNotEmpty
+            ? (stops.first['name'] as String? ?? 'Kahramanmaraş')
+            : 'Kahramanmaraş',
+        destination: stops.isNotEmpty
+            ? (stops.last['name'] as String? ?? 'Kahramanmaraş')
+            : 'Kahramanmaraş',
         currentStopName: currentStopName,
         nextStopName: nextStopName,
         occupancyPercent: _estimateOccupancy(density, lineReports.length),
         densityLevel: density,
         etaMinutes: 2 + _random.nextInt(10),
         lastUpdated: latest != null
-            ? DateTime.tryParse(latest['reported_at'] as String? ?? '') ?? DateTime.now()
+            ? DateTime.tryParse(latest['reported_at'] as String? ?? '') ??
+                DateTime.now()
             : DateTime.now(),
-        popularityScore: (line['reports_count'] as num?)?.toInt() ?? lineReports.length,
+        popularityScore:
+            (line['reports_count'] as num?)?.toInt() ?? lineReports.length,
       );
     }).toList();
   }
@@ -82,7 +94,9 @@ class ApiService {
     final reportsByStop = _groupReportsByStop(reports);
 
     return stops.map((stop) {
-      final stopId = (stop['id'] as num?)?.toInt() ?? int.tryParse(stop['id'].toString()) ?? 0;
+      final stopId = (stop['id'] as num?)?.toInt() ??
+          int.tryParse(stop['id'].toString()) ??
+          0;
       final stopReports = reportsByStop[stopId] ?? const [];
       final latest = stopReports.isNotEmpty ? stopReports.first : null;
       return BusStop(
@@ -90,7 +104,8 @@ class ApiService {
         name: (stop['name'] as String?) ?? stop['id'].toString(),
         area: '',
         distanceKm: 0,
-        currentDensity: _densityFromApiValue(latest?['density_level'] as String?),
+        currentDensity:
+            _densityFromApiValue(latest?['density_level'] as String?),
         latitude: _toDouble(stop['latitude']),
         longitude: _toDouble(stop['longitude']),
         busLines: (stop['bus_lines'] as List<dynamic>? ?? const [])
@@ -122,6 +137,18 @@ class ApiService {
     );
   }
 
+  Future<List<DensityReport>> fetchDensityReports({int limit = 20}) async {
+    final reports = await _getJsonList('$apiBaseUrl/reports/');
+    final items = reports
+        .map((item) => _reportFromJson(item as Map<String, dynamic>))
+        .toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    if (items.length <= limit) {
+      return items;
+    }
+    return items.take(limit).toList();
+  }
+
   Future<DensityReport> submitReport({
     required String busId,
     required String routeNumber,
@@ -134,7 +161,9 @@ class ApiService {
     final busLines = await _getJsonList('$apiBaseUrl/bus-lines/');
     final line = busLines.firstWhere(
       (item) => item['name'].toString() == routeNumber,
-      orElse: () => busLines.isNotEmpty ? busLines.first : <String, dynamic>{'id': busId, 'name': routeNumber},
+      orElse: () => busLines.isNotEmpty
+          ? busLines.first
+          : <String, dynamic>{'id': busId, 'name': routeNumber},
     );
 
     final stops = (line['stops'] as List<dynamic>? ?? const [])
@@ -142,7 +171,9 @@ class ApiService {
         .toList();
     final stop = stops.firstWhere(
       (item) => item['name'].toString() == stopName,
-      orElse: () => stops.isNotEmpty ? stops.first : <String, dynamic>{'id': null, 'name': stopName},
+      orElse: () => stops.isNotEmpty
+          ? stops.first
+          : <String, dynamic>{'id': null, 'name': stopName},
     );
 
     final fallbackLat = _toDouble(stop['latitude']);
@@ -163,8 +194,11 @@ class ApiService {
     );
     if (response.statusCode < 200 || response.statusCode >= 300) {
       final body = response.body.isEmpty ? null : jsonDecode(response.body);
-      final detail = body is Map<String, dynamic> ? (body['detail']?.toString() ?? body.toString()) : body?.toString();
-      throw StateError(detail ?? 'Rapor gönderilemedi (${response.statusCode}).');
+      final detail = body is Map<String, dynamic>
+          ? (body['detail']?.toString() ?? body.toString())
+          : body?.toString();
+      throw StateError(
+          detail ?? 'Rapor gönderilemedi (${response.statusCode}).');
     }
     return _reportFromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
@@ -187,7 +221,8 @@ class ApiService {
     throw StateError('Expected a JSON list from $url');
   }
 
-  Map<int, List<Map<String, dynamic>>> _groupReportsByLine(List<dynamic> reports) {
+  Map<int, List<Map<String, dynamic>>> _groupReportsByLine(
+      List<dynamic> reports) {
     final grouped = <int, List<Map<String, dynamic>>>{};
     for (final item in reports) {
       final report = item as Map<String, dynamic>;
@@ -197,15 +232,18 @@ class ApiService {
     }
     for (final entry in grouped.entries) {
       entry.value.sort((a, b) {
-        final aTime = DateTime.tryParse(a['reported_at'] as String? ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
-        final bTime = DateTime.tryParse(b['reported_at'] as String? ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final aTime = DateTime.tryParse(a['reported_at'] as String? ?? '') ??
+            DateTime.fromMillisecondsSinceEpoch(0);
+        final bTime = DateTime.tryParse(b['reported_at'] as String? ?? '') ??
+            DateTime.fromMillisecondsSinceEpoch(0);
         return bTime.compareTo(aTime);
       });
     }
     return grouped;
   }
 
-  Map<int, List<Map<String, dynamic>>> _groupReportsByStop(List<dynamic> reports) {
+  Map<int, List<Map<String, dynamic>>> _groupReportsByStop(
+      List<dynamic> reports) {
     final grouped = <int, List<Map<String, dynamic>>>{};
     for (final item in reports) {
       final report = item as Map<String, dynamic>;
@@ -215,8 +253,10 @@ class ApiService {
     }
     for (final entry in grouped.entries) {
       entry.value.sort((a, b) {
-        final aTime = DateTime.tryParse(a['reported_at'] as String? ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
-        final bTime = DateTime.tryParse(b['reported_at'] as String? ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final aTime = DateTime.tryParse(a['reported_at'] as String? ?? '') ??
+            DateTime.fromMillisecondsSinceEpoch(0);
+        final bTime = DateTime.tryParse(b['reported_at'] as String? ?? '') ??
+            DateTime.fromMillisecondsSinceEpoch(0);
         return bTime.compareTo(aTime);
       });
     }
@@ -250,11 +290,13 @@ class ApiService {
       busRouteNumber: (json['bus_line_name'] as String?) ?? '',
       stopName: (json['bus_stop_name'] as String?) ?? '',
       densityLevel: density,
-      createdAt: DateTime.tryParse(json['reported_at'] as String? ?? '') ?? DateTime.now(),
+      createdAt: DateTime.tryParse(json['reported_at'] as String? ?? '') ??
+          DateTime.now(),
       pointsAwarded: density.reportPoints,
       locationValidated: (json['is_active'] as bool?) ?? true,
       busLine: (json['bus_line_name'] as String?) ?? '',
       isActive: (json['is_active'] as bool?) ?? true,
+      reporterName: (json['user_username'] as String?) ?? 'Topluluk',
     );
   }
 
@@ -280,7 +322,6 @@ class ApiService {
     if (points >= 300) return 'Durak Kaşifi';
     return 'Yeni Katılımcı';
   }
-
 }
 
 extension<T> on Iterable<T> {

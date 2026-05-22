@@ -46,7 +46,8 @@ class _ReportDensitySheetState extends State<ReportDensitySheet> {
               Expanded(
                 child: Text(
                   'Yoğunluk bildir',
-                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+                  style: theme.textTheme.titleLarge
+                      ?.copyWith(fontWeight: FontWeight.w800),
                 ),
               ),
               DensityLevelBadge(level: widget.bus.densityLevel, compact: true),
@@ -55,7 +56,8 @@ class _ReportDensitySheetState extends State<ReportDensitySheet> {
           const SizedBox(height: 8),
           Text(
             '${widget.bus.displayName} • ${widget.stop.name}',
-            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            style: theme.textTheme.bodyMedium
+                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 16),
           Container(
@@ -80,7 +82,8 @@ class _ReportDensitySheetState extends State<ReportDensitySheet> {
           const SizedBox(height: 16),
           Text(
             'Yoğunluk seç',
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+            style: theme.textTheme.titleMedium
+                ?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
           LayoutBuilder(
@@ -141,7 +144,8 @@ class _ReportDensitySheetState extends State<ReportDensitySheet> {
     Navigator.of(context).pop();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Rapor gönderildi. +${selectedLevel.reportPoints} puan kazandınız.'),
+        content: Text(
+            'Rapor gönderildi. +${selectedLevel.reportPoints} puan kazandınız.'),
       ),
     );
   }
@@ -166,8 +170,12 @@ class _DensityChoiceButton extends StatelessWidget {
     return OutlinedButton(
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
-        backgroundColor: selected ? color.withValues(alpha: 0.16) : theme.colorScheme.surface,
-        side: BorderSide(color: selected ? color : theme.colorScheme.outlineVariant, width: 1.4),
+        backgroundColor: selected
+            ? color.withValues(alpha: 0.16)
+            : theme.colorScheme.surface,
+        side: BorderSide(
+            color: selected ? color : theme.colorScheme.outlineVariant,
+            width: 1.4),
         padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
@@ -200,12 +208,14 @@ class _DensityChoiceButton extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             level.label,
-            style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+            style: theme.textTheme.titleSmall
+                ?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 4),
           Text(
             'Seç',
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            style: theme.textTheme.bodySmall
+                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
           ),
         ],
       ),

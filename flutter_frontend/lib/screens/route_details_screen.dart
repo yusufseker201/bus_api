@@ -44,12 +44,14 @@ class RouteDetailsScreen extends StatelessWidget {
                           children: [
                             Text(
                               bus.routeName,
-                              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
+                              style: theme.textTheme.headlineSmall
+                                  ?.copyWith(fontWeight: FontWeight.w900),
                             ),
                             const SizedBox(height: 6),
                             Text(
                               bus.routeTitle,
-                              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant),
                             ),
                           ],
                         ),
@@ -110,24 +112,28 @@ class RouteDetailsScreen extends StatelessWidget {
                 children: [
                   Text(
                     'Yapay zekâ tahmini',
-                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+                    style: theme.textTheme.titleLarge
+                        ?.copyWith(fontWeight: FontWeight.w900),
                   ),
                   const SizedBox(height: 12),
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.55),
+                      color: theme.colorScheme.primaryContainer
+                          .withValues(alpha: 0.55),
                       borderRadius: BorderRadius.circular(18),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.auto_awesome_rounded, color: theme.colorScheme.primary),
+                        Icon(Icons.auto_awesome_rounded,
+                            color: theme.colorScheme.primary),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
                             bus.predictionText,
-                            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                            style: theme.textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w800),
                           ),
                         ),
                       ],
@@ -136,14 +142,24 @@ class RouteDetailsScreen extends StatelessWidget {
                   const SizedBox(height: 14),
                   Text(
                     'Tahmin güveni',
-                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 10),
-                  _ConfidenceBar(label: 'Sabah', value: 0.88, color: DensityLevel.full.color),
+                  _ConfidenceBar(
+                      label: 'Sabah',
+                      value: 0.88,
+                      color: DensityLevel.full.color),
                   const SizedBox(height: 10),
-                  _ConfidenceBar(label: 'Öğle', value: 0.55, color: DensityLevel.moderate.color),
+                  _ConfidenceBar(
+                      label: 'Öğle',
+                      value: 0.55,
+                      color: DensityLevel.moderate.color),
                   const SizedBox(height: 10),
-                  _ConfidenceBar(label: 'Akşam', value: 0.73, color: DensityLevel.crowded.color),
+                  _ConfidenceBar(
+                      label: 'Akşam',
+                      value: 0.73,
+                      color: DensityLevel.crowded.color),
                 ],
               ),
             ),
@@ -157,23 +173,28 @@ class RouteDetailsScreen extends StatelessWidget {
                 children: [
                   Text(
                     'Bu hatta son raporlar',
-                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+                    style: theme.textTheme.titleLarge
+                        ?.copyWith(fontWeight: FontWeight.w900),
                   ),
                   const SizedBox(height: 12),
                   if (recentReports.isEmpty)
                     Text(
                       'Henüz rapor yok. Django API canlı veri döndürdükçe bu hatta ait vatandaş raporları burada görünecek.',
-                      style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                      style: theme.textTheme.bodyMedium
+                          ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                     )
                   else
                     ...recentReports.map(
                       (report) => ListTile(
                         contentPadding: EdgeInsets.zero,
                         leading: CircleAvatar(
-                          backgroundColor: report.densityLevel.color.withValues(alpha: 0.14),
-                          child: Icon(Icons.markunread, color: report.densityLevel.color),
+                          backgroundColor:
+                              report.densityLevel.color.withValues(alpha: 0.14),
+                          child: Icon(Icons.markunread,
+                              color: report.densityLevel.color),
                         ),
-                        title: Text('${report.stopName} • ${report.densityLevel.label}'),
+                        title: Text(
+                            '${report.stopName} • ${report.densityLevel.label}'),
                         subtitle: Text(
                           '${report.pointsAwarded} puan • ${_formatDate(report.createdAt)}',
                         ),
@@ -210,7 +231,8 @@ class _InfoTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
+        color:
+            theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
         borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
@@ -223,7 +245,9 @@ class _InfoTile extends StatelessWidget {
               children: [
                 Text(title, style: theme.textTheme.bodySmall),
                 const SizedBox(height: 3),
-                Text(value, style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700)),
+                Text(value,
+                    style: theme.textTheme.bodyMedium
+                        ?.copyWith(fontWeight: FontWeight.w700)),
               ],
             ),
           ),
@@ -256,8 +280,8 @@ class _ConfidenceBar extends StatelessWidget {
             child: LinearProgressIndicator(
               minHeight: 10,
               value: value,
-        backgroundColor: theme.colorScheme.surfaceContainerHighest,
-        color: color,
+              backgroundColor: theme.colorScheme.surfaceContainerHighest,
+              color: color,
             ),
           ),
         ),

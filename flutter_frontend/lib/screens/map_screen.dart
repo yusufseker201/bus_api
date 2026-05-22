@@ -93,7 +93,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
                 child: _StopDetailsPanel(
                   stop: selectedStop,
                   buses: selectedBuses,
-                  selectedBus: _selectedBus ?? _firstBusForStop(buses, selectedStop),
+                  selectedBus:
+                      _selectedBus ?? _firstBusForStop(buses, selectedStop),
                   isSubmitting: _isSubmitting,
                   onBusSelected: (bus) => setState(() => _selectedBus = bus),
                   onReportLevelSelected: (level) => _submitReport(
@@ -269,7 +270,8 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
   }
 
   List<Bus> _busesForStop(List<Bus> buses, BusStop stop) {
-    final filtered = buses.where((bus) => stop.busLines.contains(bus.routeNumber)).toList();
+    final filtered =
+        buses.where((bus) => stop.busLines.contains(bus.routeNumber)).toList();
     return filtered.isNotEmpty ? filtered : buses;
   }
 
@@ -331,13 +333,18 @@ class _MapScreenState extends State<MapScreen> with TickerProviderStateMixin {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
       }
-      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
         return null;
       }
 
+      const locationSettings = LocationSettings(
+        accuracy: LocationAccuracy.high,
+        timeLimit: Duration(seconds: 6),
+      );
+
       return await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 6),
+        locationSettings: locationSettings,
       );
     } catch (_) {
       return null;
@@ -388,7 +395,8 @@ class _MapCanvas extends StatelessWidget {
                       height: 34,
                       child: GestureDetector(
                         onTap: () => onStopTap(stop),
-                        child: _StopMarker(selected: stop.id == selectedStop.id),
+                        child:
+                            _StopMarker(selected: stop.id == selectedStop.id),
                       ),
                     ),
                   )
@@ -472,14 +480,16 @@ class _StopSearchBarState extends State<_StopSearchBar> {
                 borderRadius: BorderRadius.circular(18),
                 color: theme.colorScheme.surface,
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 280, maxWidth: 560),
+                  constraints:
+                      const BoxConstraints(maxHeight: 280, maxWidth: 560),
                   child: ListView.separated(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     shrinkWrap: true,
                     itemCount: optionsList.length,
                     separatorBuilder: (_, __) => Divider(
                       height: 1,
-                      color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
+                      color: theme.colorScheme.outlineVariant
+                          .withValues(alpha: 0.35),
                     ),
                     itemBuilder: (context, index) {
                       final stop = optionsList[index];
@@ -542,7 +552,9 @@ class _GlassCaption extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
+              Text(title,
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w900)),
               const SizedBox(height: 4),
               Text(subtitle, style: theme.textTheme.bodySmall),
             ],
@@ -616,17 +628,20 @@ class _StopDetailsPanel extends StatelessWidget {
           children: [
             Text(
               stop.name,
-              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
+              style: theme.textTheme.headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 6),
             Text(
               '${stop.latitude.toStringAsFixed(5)}, ${stop.longitude.toStringAsFixed(5)}',
-              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 20),
             Text(
               'Bu duraktan geçen hatlar',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 12),
             ...buses.map(
@@ -642,7 +657,8 @@ class _StopDetailsPanel extends StatelessWidget {
             const SizedBox(height: 18),
             Text(
               'Yoğunluk raporu',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 12),
             GridView.count(
@@ -655,7 +671,9 @@ class _StopDetailsPanel extends StatelessWidget {
               children: DensityLevel.values
                   .map(
                     (level) => FilledButton.tonal(
-                      onPressed: isSubmitting ? null : () => onReportLevelSelected(level),
+                      onPressed: isSubmitting
+                          ? null
+                          : () => onReportLevelSelected(level),
                       style: FilledButton.styleFrom(
                         backgroundColor: level.color.withValues(alpha: 0.12),
                         foregroundColor: level.color,
@@ -792,7 +810,8 @@ class _BusTile extends StatelessWidget {
                   children: [
                     Text(
                       bus.displayName,
-                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w900),
                     ),
                     const SizedBox(height: 2),
                     Text(

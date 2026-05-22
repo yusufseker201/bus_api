@@ -21,10 +21,12 @@ class BusDensityApp extends StatelessWidget {
       providers: [
         Provider(create: (_) => AuthService()),
         ChangeNotifierProvider(
-          create: (context) => SessionState(context.read<AuthService>())..load(),
+          create: (context) =>
+              SessionState(context.read<AuthService>())..load(),
         ),
         ProxyProvider<SessionState, ApiService>(
-          update: (_, session, __) => ApiService(tokenProvider: () => session.token),
+          update: (_, session, __) =>
+              ApiService(tokenProvider: () => session.token),
         ),
         ChangeNotifierProxyProvider2<ApiService, SessionState, AppState>(
           create: (context) => AppState(

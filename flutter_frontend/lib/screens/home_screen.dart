@@ -27,7 +27,8 @@ class HomeScreen extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final selectedStop = state.selectedStop ?? (state.stops.isNotEmpty ? state.stops.first : null);
+        final selectedStop = state.selectedStop ??
+            (state.stops.isNotEmpty ? state.stops.first : null);
         final busesAtStop = state.busesForSelectedStop();
 
         return RefreshIndicator(
@@ -116,7 +117,8 @@ class _MainContent {
           const SizedBox(height: 16),
           Text(
             'Bu duraktan geçen otobüsler',
-            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+            style: theme.textTheme.titleLarge
+                ?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 10),
           ...busesAtStop.map(
@@ -159,17 +161,20 @@ class _SelectedStopCard extends StatelessWidget {
           children: [
             Text(
               'Seçilen durak',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
             Text(
               stop!.name,
-              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
+              style: theme.textTheme.headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 4),
             Text(
               stop!.area,
-              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -201,7 +206,10 @@ class _LegendCard extends StatelessWidget {
           children: [
             Text(
               'Yoğunluk renkleri',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 12),
             const Wrap(

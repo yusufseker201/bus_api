@@ -18,6 +18,7 @@ class AppState extends ChangeNotifier {
   String? errorMessage;
   List<Bus> buses = const [];
   List<BusStop> stops = const [];
+  List<DensityReport> liveReports = const [];
   UserProfile? profile;
 
   Bus? selectedBus;
@@ -37,9 +38,11 @@ class AppState extends ChangeNotifier {
       final results = await Future.wait([
         _apiService.fetchBuses(),
         _apiService.fetchBusStops(),
+        _apiService.fetchDensityReports(),
       ]);
       buses = results[0] as List<Bus>;
       stops = results[1] as List<BusStop>;
+      liveReports = results[2] as List<DensityReport>;
 
       if (_session.isLoggedIn) {
         profile = await _apiService.getUserProfile();
@@ -74,15 +77,17 @@ class AppState extends ChangeNotifier {
   BusStop nearestStopForBus(Bus bus) {
     return stops.firstWhere(
       (stop) => stop.name == bus.currentStopName,
-      orElse: () => stops.isNotEmpty ? stops.first : const BusStop(
-        id: 'fallback',
-        name: 'Unknown Stop',
-        area: 'Unknown',
-        distanceKm: 0,
-        currentDensity: DensityLevel.moderate,
-        latitude: 0,
-        longitude: 0,
-      ),
+      orElse: () => stops.isNotEmpty
+          ? stops.first
+          : const BusStop(
+              id: 'fallback',
+              name: 'Unknown Stop',
+              area: 'Unknown',
+              distanceKm: 0,
+              currentDensity: DensityLevel.moderate,
+              latitude: 0,
+              longitude: 0,
+            ),
     );
   }
 
@@ -113,6 +118,11 @@ class AppState extends ChangeNotifier {
       return buses;
     }
 
-    return buses.where((bus) => stop.busLines.contains(bus.routeNumber)).toList();
+    return buses
+        .where((bus) => stop.busLines.contains(bus.routeNumber))
+        .toList();
   }
+
+  int get activeLiveReportCount =>
+      liveReports.where((report) => report.isActive).length;
 }

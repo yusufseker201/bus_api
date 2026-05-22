@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -9,10 +10,12 @@ class AuthService {
     String? apiBaseUrl,
   })  : _client = client ?? http.Client(),
         apiBaseUrl = apiBaseUrl ??
-            const String.fromEnvironment(
-              'API_BASE_URL',
-              defaultValue: 'http://127.0.0.1:8000/api',
-            );
+            (kIsWeb
+                ? '/api'
+                : const String.fromEnvironment(
+                    'API_BASE_URL',
+                    defaultValue: 'http://10.0.2.2:8000/api',
+                  ));
 
   static const String _tokenKey = 'api_token';
   static const String _emailKey = 'auth_email';
@@ -35,7 +38,8 @@ class AuthService {
         : jsonDecode(response.body) as Map<String, dynamic>;
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      final message = (decodedBody['detail'] as String?) ?? 'Giriş başarısız oldu.';
+      final message =
+          (decodedBody['detail'] as String?) ?? 'Giriş başarısız oldu.';
       throw AuthException(message);
     }
 

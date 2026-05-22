@@ -49,7 +49,8 @@ class _AppShellState extends State<AppShell> {
               children: [
                 NavigationRail(
                   selectedIndex: _index,
-                  onDestinationSelected: (value) => setState(() => _index = value),
+                  onDestinationSelected: (value) =>
+                      setState(() => _index = value),
                   labelType: NavigationRailLabelType.all,
                   destinations: const [
                     NavigationRailDestination(

@@ -1,0 +1,84 @@
+{% extends "admin/base_site.html" %}
+
+{% block breadcrumbs %}
+  <div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Anasayfa</a>
+    &rsaquo; Canli Bildirimler
+  </div>
+{% endblock %}
+
+{% block content %}
+  <div class="km-dashboard-grid">
+    <section class="km-panel-card">
+      <div class="km-panel-header">
+        <div>
+          <h1 class="km-panel-title">Canli Bildirimler</h1>
+          <p class="km-panel-subtitle">Son 1 saatte gelen veya hala aktif olan raporlarin operasyon ekranı.</p>
+        </div>
+        <a class="km-pill-link" href="{% url 'admin:tracker_densityreport_changelist' %}">Tum raporlari yonet</a>
+      </div>
+
+      <div class="km-stat-value" data-live-report-count>{{ live_report_count }}</div>
+      <div class="km-stat-label">Aktif canli bildirim</div>
+      <p class="km-updated-at">Son guncelleme: <span data-live-report-updated-at>{{ updated_at|default:"-" }}</span></p>
+    </section>
+  </div>
+
+  <section class="km-panel-card">
+    <div class="km-panel-header">
+      <div>
+        <h2 class="km-panel-title">Anlik Rapor Akisi</h2>
+        <p class="km-panel-subtitle">Sayfa yenilenmeden otomatik guncellenir.</p>
+      </div>
+    </div>
+
+    <div class="km-empty-state" data-live-report-empty {% if live_reports %}hidden{% endif %}>
+      Henuz gosterilecek canli bildirim yok.
+    </div>
+
+    <div class="km-feed-shell">
+      <table class="km-live-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Hat</th>
+            <th>Durak</th>
+            <th>Yogunluk</th>
+            <th>Kullanici</th>
+            <th>Saat</th>
+            <th>Durum</th>
+            <th>Detay</th>
+          </tr>
+        </thead>
+        <tbody data-live-report-feed>
+          {% for report in live_reports %}
+            <tr>
+              <td><strong>#{{ report.id }}</strong></td>
+              <td>
+                <strong>{{ report.bus_line }}</strong>
+                {% if report.district %}
+                  <div class="km-panel-subtitle">{{ report.district }}</div>
+                {% endif %}
+              </td>
+              <td>{{ report.bus_stop }}</td>
+              <td><span class="km-density-badge {{ report.density_class }}">{{ report.density_label }}</span></td>
+              <td>
+                <strong>{{ report.username }}</strong>
+                {% if report.full_name and report.full_name != '-' %}
+                  <span class="km-user-meta">{{ report.full_name }}</span>
+                {% endif %}
+              </td>
+              <td>{{ report.reported_at }}</td>
+              <td>
+                <span class="km-status-badge {% if report.is_active %}active{% else %}passive{% endif %}">
+                  {% if report.is_active %}Aktif{% else %}Pasif{% endif %}
+                </span>
+              </td>
+              <td><a class="km-pill-link" href="{{ report.change_url }}">Ac</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endblock %}

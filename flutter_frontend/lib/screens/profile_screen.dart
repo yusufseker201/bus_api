@@ -31,7 +31,8 @@ class ProfileScreen extends StatelessWidget {
                     CircleAvatar(
                       radius: 28,
                       backgroundColor: theme.colorScheme.primaryContainer,
-                      child: Icon(Icons.person, color: theme.colorScheme.primary),
+                      child:
+                          Icon(Icons.person, color: theme.colorScheme.primary),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
@@ -40,12 +41,14 @@ class ProfileScreen extends StatelessWidget {
                         children: [
                           Text(
                             profile.userName,
-                            style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
+                            style: theme.textTheme.headlineSmall
+                                ?.copyWith(fontWeight: FontWeight.w900),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             'Şehir genelindeki etkinizi takip edin',
-                            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant),
                           ),
                         ],
                       ),
@@ -83,7 +86,8 @@ class ProfileScreen extends StatelessWidget {
                   children: [
                     Text(
                       'Mevcut rozet',
-                      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+                      style: theme.textTheme.titleLarge
+                          ?.copyWith(fontWeight: FontWeight.w900),
                     ),
                     const SizedBox(height: 12),
                     DensityLevelBadge(
@@ -94,12 +98,14 @@ class ProfileScreen extends StatelessWidget {
                     const SizedBox(height: 10),
                     Text(
                       profile.badgeName,
-                      style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+                      style: theme.textTheme.bodyLarge
+                          ?.copyWith(fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       'Ödüller rapor kalitesi ve düzenliliğe göre verilir. Bu alan daha sonra Django kullanıcı istatistikleriyle senkronize olacak.',
-                      style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                      style: theme.textTheme.bodyMedium
+                          ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -114,26 +120,32 @@ class ProfileScreen extends StatelessWidget {
                   children: [
                     Text(
                       'Son raporlar',
-                      style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+                      style: theme.textTheme.titleLarge
+                          ?.copyWith(fontWeight: FontWeight.w900),
                     ),
                     const SizedBox(height: 12),
                     ...profile.recentReports.map(
                       (report) => ListTile(
                         contentPadding: EdgeInsets.zero,
                         leading: CircleAvatar(
-                          backgroundColor: report.densityLevel.color.withValues(alpha: 0.14),
+                          backgroundColor:
+                              report.densityLevel.color.withValues(alpha: 0.14),
                           child: Text(
                             report.densityLevel.shortLabel.substring(0, 1),
-                            style: TextStyle(color: report.densityLevel.color, fontWeight: FontWeight.w800),
+                            style: TextStyle(
+                                color: report.densityLevel.color,
+                                fontWeight: FontWeight.w800),
                           ),
                         ),
-                        title: Text('Hat ${report.busRouteNumber} • ${report.stopName}'),
+                        title: Text(
+                            'Hat ${report.busRouteNumber} • ${report.stopName}'),
                         subtitle: Text(
                           '${report.densityLevel.label} • +${report.pointsAwarded} puan',
                         ),
                         trailing: Text(
                           _formatDate(report.createdAt),
-                          style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant),
                         ),
                       ),
                     ),
@@ -176,7 +188,8 @@ class _MetricCard extends StatelessWidget {
             const SizedBox(height: 14),
             Text(
               value,
-              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+              style: theme.textTheme.titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 4),
             Text(title, style: theme.textTheme.bodyMedium),
