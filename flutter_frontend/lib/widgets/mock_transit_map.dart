@@ -29,68 +29,79 @@ class MockTransitMap extends StatelessWidget {
     final visibleStops = stops.take(8).toList();
     final visibleBuses = buses.take(5).toList();
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppTheme.radius),
-        boxShadow: AppTheme.softShadow,
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 12),
-            child: Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final height = constraints.hasBoundedHeight && constraints.maxHeight.isFinite
+            ? constraints.maxHeight
+            : 360.0;
+
+        return SizedBox(
+          height: height,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(AppTheme.radius),
+              boxShadow: AppTheme.softShadow,
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 18, 18, 12),
+                  child: Row(
                     children: [
-                      Text(
-                        'Durak yoğunluğu',
-                        style: theme.textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w800),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Harita görünümü, seçili durak ve anlık otobüs noktaları',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Durak yoğunluğu',
+                              style: theme.textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w800),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Harita görünümü, seçili durak ve anlık otobüs noktaları',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
+                      const _MiniLegend(levels: DensityLevel.values),
                     ],
                   ),
                 ),
-                const _MiniLegend(levels: DensityLevel.values),
+                Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color(0xFFD6EEF9),
+                          Color(0xFFF8FBFE),
+                          Color(0xFFEAF5FF),
+                        ],
+                      ),
+                    ),
+                    child: Stack(
+                      children: [
+                        const Positioned.fill(child: _MapBackdrop()),
+                        ..._buildStopPins(visibleStops),
+                        ..._buildBusPins(visibleBuses),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
-          Expanded(
-            child: Container(
-              margin: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFFD6EEF9),
-                    Color(0xFFF8FBFE),
-                    Color(0xFFEAF5FF),
-                  ],
-                ),
-              ),
-              child: Stack(
-                children: [
-                  const Positioned.fill(child: _MapBackdrop()),
-                  ..._buildStopPins(visibleStops),
-                  ..._buildBusPins(visibleBuses),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 

@@ -1,0 +1,15 @@
+{% extends "admin/change_list.html" %}
+
+{% block object-tools-items %}
+  {{ block.super }}
+  <li>
+    {% with query_string=request.GET.urlencode %}
+      <a
+        href="{% url 'admin:tracker_densityreport_download_csv' %}{% if query_string %}?{{ query_string }}{% endif %}"
+        class="historylink"
+      >
+        CSV İndir
+      </a>
+    {% endwith %}
+  </li>
+{% endblock %}

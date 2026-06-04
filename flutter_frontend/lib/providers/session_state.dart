@@ -17,10 +17,17 @@ class SessionState extends ChangeNotifier {
   String? get email => _email;
 
   Future<void> load() async {
-    _token = await _authService.getSavedToken();
-    _email = await _authService.getSavedEmail();
-    _isReady = true;
-    notifyListeners();
+    try {
+      _token = await _authService.getSavedToken();
+      _email = await _authService.getSavedEmail();
+    } catch (_) {
+      // Browser storage can fail on some setups; fall back to a guest session.
+      _token = null;
+      _email = null;
+    } finally {
+      _isReady = true;
+      notifyListeners();
+    }
   }
 
   Future<void> login({

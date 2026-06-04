@@ -6,6 +6,9 @@ from .views import (
     BusStopViewSet,
     DensityReportViewSet,
     LoginView,
+    RegisterView,
+    PasswordResetConfirmView,
+    PasswordResetRequestView,
     UserProfileViewSet,
 )
 
@@ -18,5 +21,17 @@ router.register(r'profiles', UserProfileViewSet, basename='userprofile')
 urlpatterns = [
     path('login/', LoginView.as_view(), name='login'),
     path('auth/login/', LoginView.as_view(), name='auth-login'),
+    path('register/', RegisterView.as_view(), name='register'),
+    path('auth/register/', RegisterView.as_view(), name='auth-register'),
+    path(
+        'auth/password-reset/request/',
+        PasswordResetRequestView.as_view(),
+        name='password-reset-request',
+    ),
+    path(
+        'auth/password-reset/confirm/',
+        PasswordResetConfirmView.as_view(),
+        name='password-reset-confirm',
+    ),
 ]
 urlpatterns += router.urls

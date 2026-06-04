@@ -44,6 +44,34 @@ class ExportReportMixin:
             ),
         }
 
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                'download-csv/',
+                self.admin_site.admin_view(self.download_csv_view),
+                name=f'{self.model._meta.app_label}_{self.model._meta.model_name}_download_csv',
+            ),
+        ]
+        return custom_urls + urls
+
+    def download_csv_view(self, request):
+        changelist = self.get_changelist_instance(request)
+        queryset = changelist.queryset.select_related('bus_line', 'bus_stop', 'user')
+
+        response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
+        response['Content-Disposition'] = 'attachment; filename="yogunluk_raporlari.csv"'
+        response.write('\ufeff')
+
+        writer = csv.writer(response)
+        writer.writerow([header for header, _ in self.export_fields])
+
+        for report in queryset:
+            row = self._report_row(report)
+            writer.writerow([row[key] for _, key in self.export_fields])
+
+        return response
+
     @admin.action(description='Secilen raporlari CSV olarak disa aktar')
     def export_as_csv(self, request, queryset):
         response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
@@ -202,6 +230,7 @@ class UserProfileAdmin(admin.ModelAdmin):
 
 @admin.register(DensityReport)
 class DensityReportAdmin(ExportReportMixin, admin.ModelAdmin):
+    change_list_template = 'admin/tracker/densityreport/change_list.html'
     list_display = (
         'id',
         'bus_line',

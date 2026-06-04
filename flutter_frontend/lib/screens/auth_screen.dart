@@ -4,30 +4,98 @@ import 'package:provider/provider.dart';
 import '../providers/app_state.dart';
 import '../providers/session_state.dart';
 import '../theme/app_theme.dart';
+import '../widgets/registration_dialog.dart';
+import '../widgets/password_reset_dialog.dart';
 import 'main_screen.dart';
 
-class AuthGate extends StatelessWidget {
+class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
+
+  @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  bool _queuedProfileRefresh = false;
 
   @override
   Widget build(BuildContext context) {
     return Consumer2<SessionState, AppState>(
       builder: (context, session, state, _) {
         if (!session.isReady) {
-          return const Scaffold(
-            backgroundColor: AppTheme.shell,
-            body: Center(child: CircularProgressIndicator()),
-          );
+          _queuedProfileRefresh = false;
+          return const _StartupLoadingScaffold();
         }
 
-        if (session.isLoggedIn && !state.isLoading && state.profile == null) {
+        if (!session.isLoggedIn) {
+          _queuedProfileRefresh = false;
+        } else if (!state.isLoading &&
+            state.profile == null &&
+            !_queuedProfileRefresh) {
+          _queuedProfileRefresh = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            context.read<AppState>().loadInitialData();
+            if (mounted) {
+              context.read<AppState>().loadInitialData();
+            }
           });
+        } else if (state.profile != null) {
+          _queuedProfileRefresh = false;
         }
 
         return const MainScreen();
       },
+    );
+  }
+}
+
+class _StartupLoadingScaffold extends StatelessWidget {
+  const _StartupLoadingScaffold();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      backgroundColor: AppTheme.shell,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Container(
+            margin: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(26),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(26),
+              boxShadow: AppTheme.softShadow,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(
+                  width: 34,
+                  height: 34,
+                  child: CircularProgressIndicator(strokeWidth: 3),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  'Uygulama hazırlanıyor',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.titleLarge
+                      ?.copyWith(fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Oturum bilgisi ve canlı veri akışı yükleniyor.',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -73,6 +141,71 @@ class _AuthScreenState extends State<AuthScreen> {
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _openPasswordResetDialog() async {
+    FocusScope.of(context).unfocus();
+    final resetIdentifier = await showPasswordResetDialog(
+      context,
+      initialIdentifier: _emailController.text,
+    );
+
+    if (!mounted || resetIdentifier == null) {
+      return;
+    }
+
+    setState(() {
+      _emailController.text = resetIdentifier;
+      _passwordController.clear();
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Şifren güncellendi. Yeni şifrenle giriş yapabilirsin.',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openRegistrationDialog() async {
+    FocusScope.of(context).unfocus();
+    final registrationResult = await showRegistrationDialog(
+      context,
+      initialEmail: _emailController.text,
+    );
+
+    if (!mounted || registrationResult == null) {
+      return;
+    }
+
+    setState(() {
+      _emailController.text = registrationResult.email;
+      _passwordController.clear();
+      _isLoading = true;
+    });
+
+    try {
+      await context.read<SessionState>().login(
+            email: registrationResult.email,
+            password: registrationResult.password,
+          );
+      if (!mounted) return;
+      await context.read<AppState>().loadInitialData();
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString())),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
@@ -210,6 +343,19 @@ class _AuthScreenState extends State<AuthScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed:
+                            _isLoading ? null : _openRegistrationDialog,
+                        icon: const Icon(Icons.person_add_alt_1_rounded),
+                        label: const Text('Kayıt Ol'),
+                      ),
+                      const SizedBox(height: 12),
+                      TextButton(
+                        onPressed:
+                            _isLoading ? null : _openPasswordResetDialog,
+                        child: const Text('Şifremi Unuttum?'),
+                      ),
+                      const SizedBox(height: 2),
                       TextButton(
                         onPressed: () => Navigator.of(context).pop(false),
                         child: const Text('Panele geri dön'),

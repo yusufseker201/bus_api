@@ -4,8 +4,14 @@ import mimetypes
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
+from django.contrib.auth.tokens import default_token_generator
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import FileResponse, Http404
 from django.db.models import Count, Prefetch, Q
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.utils.text import slugify
 from django.views.decorators.http import require_GET
 from django.views.decorators.csrf import csrf_exempt  # CSRF muafiyeti için eklendi
 from django.utils.decorators import method_decorator  # Class-based view'lar için eklendi
@@ -80,6 +86,78 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(trim_whitespace=False)
 
 
+class RegisterSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(trim_whitespace=False)
+    confirm_password = serializers.CharField(trim_whitespace=False)
+
+    def validate_email(self, value):
+        normalized = value.strip().lower()
+        if not normalized:
+            raise serializers.ValidationError('Bu alan zorunludur.')
+        return normalized
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['confirm_password']:
+            raise serializers.ValidationError(
+                {'confirm_password': 'Şifreler eşleşmiyor.'}
+            )
+
+        try:
+            validate_password(attrs['password'])
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError({'password': list(exc.messages)})
+
+        return attrs
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    identifier = serializers.CharField()
+
+    def validate_identifier(self, value):
+        value = value.strip()
+        if not value:
+            raise serializers.ValidationError('Bu alan zorunludur.')
+        return value
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    uid = serializers.CharField()
+    token = serializers.CharField()
+    new_password = serializers.CharField(trim_whitespace=False, write_only=True)
+    confirm_password = serializers.CharField(trim_whitespace=False, write_only=True)
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['confirm_password']:
+            raise serializers.ValidationError(
+                {'confirm_password': 'Şifreler eşleşmiyor.'}
+            )
+        return attrs
+
+
+def _find_user_for_password_reset(identifier):
+    User = get_user_model()
+    return User.objects.filter(
+        Q(email__iexact=identifier) | Q(username__iexact=identifier)
+    ).first()
+
+
+def _build_unique_username(email):
+    User = get_user_model()
+    local_part = email.split('@', 1)[0]
+    base = slugify(local_part) or 'user'
+    candidate = base[:150]
+    suffix = 1
+
+    while User.objects.filter(username__iexact=candidate).exists():
+        suffix_text = f'-{suffix}'
+        trimmed_base = base[: max(1, 150 - len(suffix_text))]
+        candidate = f'{trimmed_base}{suffix_text}'
+        suffix += 1
+
+    return candidate
+
+
 # Web testlerinde ve Flutter isteklerinde CSRF engeline takılmamak için muaf tutuyoruz
 @method_decorator(csrf_exempt, name='dispatch')
 class LoginView(APIView):
@@ -117,6 +195,118 @@ class LoginView(APIView):
         )
 
 
+@method_decorator(csrf_exempt, name='dispatch')
+class RegisterView(APIView):
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+
+    def post(self, request, *args, **kwargs):
+        serializer = RegisterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data['email']
+        password = serializer.validated_data['password']
+
+        User = get_user_model()
+        if User.objects.filter(email__iexact=email).exists():
+            return Response(
+                {'email': 'Bu e-posta ile kayıtlı bir hesap zaten var.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        username = _build_unique_username(email)
+        User.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+        )
+
+        return Response(
+            {
+                'detail': 'Hesabın oluşturuldu. Şimdi giriş yapabilirsin.',
+                'email': email,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class PasswordResetRequestView(APIView):
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+
+    def post(self, request, *args, **kwargs):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        identifier = serializer.validated_data['identifier']
+        user = _find_user_for_password_reset(identifier)
+        if user is None:
+            return Response(
+                {'detail': 'Bu e-posta/kullanıcı adına sahip hesap bulunamadı.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+
+        return Response(
+            {
+                'detail': 'Şifre sıfırlama bilgileri hazır.',
+                'uid': uid,
+                'token': token,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class PasswordResetConfirmView(APIView):
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+
+    def post(self, request, *args, **kwargs):
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        uid = serializer.validated_data['uid']
+        token = serializer.validated_data['token']
+        new_password = serializer.validated_data['new_password']
+
+        try:
+            user_pk = force_str(urlsafe_base64_decode(uid))
+        except (TypeError, ValueError, OverflowError):
+            return Response(
+                {'detail': 'Geçersiz sıfırlama bilgisi.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        User = get_user_model()
+        user = User.objects.filter(pk=user_pk).first()
+        if user is None or not default_token_generator.check_token(user, token):
+            return Response(
+                {'detail': 'Sıfırlama bağlantısı geçersiz veya süresi dolmuş.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            validate_password(new_password, user=user)
+        except DjangoValidationError as exc:
+            return Response(
+                {'new_password': list(exc.messages)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user.set_password(new_password)
+        user.save(update_fields=['password'])
+        Token.objects.filter(user=user).delete()
+
+        return Response(
+            {'detail': 'Şifren güncellendi. Yeni şifrenle giriş yapabilirsin.'},
+            status=status.HTTP_200_OK,
+        )
+
+
 class BusLineViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = BusLine.objects.prefetch_related('stops').annotate(
         reports_count=Count('reports', filter=Q(reports__is_active=True))
@@ -139,8 +329,15 @@ class DensityReportViewSet(viewsets.ModelViewSet):
     serializer_class = DensityReportSerializer
     # Varsayılan izni AllowAny yapıyoruz ki GET istekleri (listeleme) serbest olsun
     permission_classes = [permissions.AllowAny]
-    # Sadece Token tabanlı doğrulamayı önceliklendiriyoruz, Session tabanlı CSRF kontrolünü eziyoruz
-    authentication_classes = [TokenAuthentication]
+    # Okuma isteklerinde token doğrulamasını kapatıyoruz; yazma isteklerinde açıyoruz.
+    authentication_classes = []
+
+    def initialize_request(self, request, *args, **kwargs):
+        if request.method in permissions.SAFE_METHODS:
+            self.authentication_classes = []
+        else:
+            self.authentication_classes = [TokenAuthentication]
+        return super().initialize_request(request, *args, **kwargs)
 
     def get_queryset(self):
         return DensityReport.objects.select_related('bus_line', 'bus_stop', 'user').filter(
